@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/arslan-atajykov/kanban/internal/auth"
+	"github.com/arslan-atajykov/kanban/internal/board"
 	"github.com/go-chi/chi"
 	"github.com/jmoiron/sqlx"
 )
@@ -28,6 +29,10 @@ func SetupRouter(db *sqlx.DB) http.Handler {
 			userID := r.Context().Value(auth.UserIDKey).(int64)
 			w.Write([]byte("Your user ID is: " + fmt.Sprint(userID)))
 		})
+		r.Post("/boards", board.CreateBoardHandler(db))
+		r.Get("/boards", board.ListBoardsHandler(db))
+		r.Put("/boards/{id}", board.UpdateBoardHandler(db))
+		r.Delete("/boards/{id}", board.DeleteBoardHandler(db))
 	})
 
 	return r

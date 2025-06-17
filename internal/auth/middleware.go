@@ -16,12 +16,13 @@ func JWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+			http.Error(w, "missing the auth token", http.StatusUnauthorized)
 			return
 		}
+
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
 		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			// Проверка алгоритма
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrInvalidKey
 			}
@@ -34,17 +35,15 @@ func JWTMiddleware(next http.Handler) http.Handler {
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+			http.Error(w, "token claims are invalid", http.StatusUnauthorized)
 			return
 		}
 		userID, ok := claims["user_id"].(float64)
 		if !ok {
 			http.Error(w, "Invalid user_id in token", http.StatusUnauthorized)
-			return
 		}
-
 		ctx := context.WithValue(r.Context(), UserIDKey, int64(userID))
 		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 
+	})
 }
